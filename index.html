@@ -4,93 +4,141 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OnNotes</title>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#e9eef2;--ink:#14213d;--paper:#fff;--line:#c9d3dc;--accent:#ffc83d;--soft:#fff3c4;--mute:#5d6b7a}
-@media (prefers-color-scheme:dark){:root{--bg:#10161d;--ink:#e8eef5;--paper:#1a232d;--line:#2d3a47;--accent:#ffc83d;--soft:#4a3f12;--mute:#93a1b0}}
+:root{--bg:#f2f3f0;--sf:#fff;--ink:#1d2327;--mut:#6b7378;--ln:#e2e4df;--ac:#4f7f6d;--acs:#e4eee9}
 *{box-sizing:border-box}
-body{margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;background:var(--bg);color:var(--ink);
-background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:28px 28px;min-height:100vh}
-button{font:inherit;cursor:pointer;border:2px solid var(--ink);background:var(--paper);color:var(--ink);border-radius:8px;padding:8px 14px;font-weight:600}
-button:hover{background:var(--accent);color:#14213d}
-button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-input{font:inherit;border:2px solid var(--ink);background:var(--paper);color:var(--ink);border-radius:8px;padding:8px 12px}
-.wrap{max-width:1100px;margin:0 auto;padding:20px 16px 60px}
-#join{max-width:520px;margin:12vh auto 0;background:var(--paper);border:2px solid var(--ink);border-radius:14px;padding:28px;box-shadow:8px 8px 0 var(--ink)}
-#join h1{font-size:2.4rem;margin:0 0 6px;font-weight:800;letter-spacing:-.02em}
-#join p{color:var(--mute);margin:0 0 20px}
-.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.row input{flex:1;min-width:140px;text-transform:uppercase;letter-spacing:.15em}
-#setup{display:none;background:var(--soft);border:2px solid var(--ink);border-radius:10px;padding:14px;margin-top:18px;font-size:.92rem}
-#app{display:none}
-header{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between;margin-bottom:14px}
-.code{font-weight:800;font-size:1.3rem;letter-spacing:.2em;background:var(--accent);color:#14213d;border:2px solid var(--ink);border-radius:8px;padding:4px 12px}
-.tabs button.on{background:var(--ink);color:var(--paper)}
-#notes{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-top:14px}
-.note{background:var(--soft);border:2px solid var(--ink);border-radius:4px 4px 14px 4px;padding:8px;box-shadow:4px 4px 0 var(--ink);display:flex;flex-direction:column}
-.note textarea{width:100%;min-height:150px;resize:vertical;border:0;background:transparent;color:var(--ink);font:inherit;padding:4px}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 'DM Sans',system-ui,sans-serif}
+.serif{font-family:'Fraunces',Georgia,serif}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;display:inline-flex;align-items:center;gap:6px}
+svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.btn{padding:10px 18px;border-radius:999px;font-weight:700;transition:background .15s,transform .1s}
+.btn:active{transform:scale(.97)}
+.pri{background:var(--ink);color:#fff}.pri:hover{background:var(--ac)}
+.sec{background:var(--sf);border:1px solid var(--ln)}.sec:hover{border-color:var(--ink)}
+input[type=text]{font:inherit;border:1px solid var(--ln);background:var(--sf);color:var(--ink);border-radius:999px;padding:10px 16px;min-width:0}
+#join{max-width:480px;margin:0 auto;padding:14vh 20px 40px;text-align:center}
+#join h1{font-size:3.4rem;line-height:1.05;margin:0 0 10px;letter-spacing:-.02em}
+#join p{color:var(--mut);margin:0 0 28px;font-size:1.05rem}
+#join .or{margin:26px 0 12px;color:var(--mut);font-size:.9rem}
+.rowc{display:flex;gap:8px;justify-content:center}
+.rowc input{flex:1;max-width:220px;text-align:center;letter-spacing:.2em;text-transform:uppercase}
+#setup{display:none;margin-top:20px;background:var(--acs);border-radius:12px;padding:12px 14px;font-size:.9rem}
+#app{display:none;padding-bottom:110px}
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between;padding:12px 20px;background:rgba(242,243,240,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--ln)}
+.logo{font-size:1.4rem;font-weight:700;display:flex;align-items:center;gap:8px}
+.seg{display:flex;background:var(--sf);border:1px solid var(--ln);border-radius:999px;padding:3px}
+.seg button{padding:7px 16px;border-radius:999px;font-weight:500;color:var(--mut)}
+.seg button.on{background:var(--ink);color:#fff}
+.right{display:flex;align-items:center;gap:10px}
+.who{display:flex;align-items:center;cursor:pointer}
+.av{width:28px;height:28px;border-radius:50%;color:#fff;font-size:.78rem;font-weight:700;display:grid;place-items:center;border:2px solid var(--bg);margin-left:-6px}
+.av:first-child{margin-left:0}.av.more{background:var(--mut)}
+.cnt{margin-left:8px;color:var(--mut);font-size:.85rem}
+.chip{background:var(--acs);color:var(--ac);font-weight:700;letter-spacing:.14em;padding:7px 14px;border-radius:999px}
+.chip:hover{background:var(--ac);color:#fff}
+.ghost{padding:7px;border-radius:50%;color:var(--mut)}.ghost:hover{background:var(--ln);color:var(--ink)}
+.view{display:none;max-width:1440px;margin:0 auto;padding:22px 20px}.view.on{display:block}
+.vh{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.vh h2{font-size:1.7rem;margin:0}
+#notes{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px}
+.note{border-radius:16px;padding:12px 14px 14px;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(0,0,0,.06);animation:pop .25s ease-out}
+@keyframes pop{from{transform:scale(.94);opacity:0}}
+.note textarea{flex:1;min-height:230px;resize:vertical;border:0;background:transparent;color:var(--ink);font:inherit;font-size:1rem;line-height:1.6;padding:6px 0}
 .note textarea:focus{outline:none}
-.note button{align-self:flex-end;padding:2px 10px;font-size:.8rem}
-#board{display:none}
-.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
-.tools input[type=color]{padding:0;width:42px;height:38px}
-.tools input[type=range]{padding:0;width:110px}
-canvas{width:100%;background:#fff;border:2px solid var(--ink);border-radius:10px;touch-action:none;cursor:crosshair;display:block}
-#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:8px 16px;border-radius:8px;opacity:0;transition:opacity .2s;pointer-events:none}
+.nh{display:flex;align-items:center;gap:6px}.sp{flex:1}
+.dot{width:18px;height:18px;border-radius:50%;border:1.5px solid rgba(0,0,0,.28);padding:0}.dot:hover{transform:scale(1.2)}
+.ic{padding:4px;border-radius:8px;color:rgba(0,0,0,.55)}.ic:hover{background:rgba(0,0,0,.08);color:#000}
+#empty{display:none;flex-direction:column;align-items:center;gap:8px;color:var(--mut);padding:60px 0}
+#empty svg{width:36px;height:36px}
+#boardTabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.bt{display:flex;align-items:center;background:var(--sf);border:1px solid var(--ln);border-radius:999px;padding:2px}
+.bt .nm,.bt.add{padding:6px 14px;border-radius:999px;font-weight:500}
+.bt.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.bt .x{padding:5px;border-radius:50%;margin-right:3px}.bt .x:hover{background:rgba(255,255,255,.2)}
+.bt.add{color:var(--ac);border-style:dashed;border-color:var(--ac);background:none}.bt.add:hover{background:var(--acs)}
+.stage{position:relative;aspect-ratio:16/10;background:#fff;border-radius:20px;border:1px solid var(--ln);box-shadow:0 8px 30px rgba(29,35,39,.07);overflow:hidden;background-image:radial-gradient(#d3d6d0 1px,transparent 1.3px);background-size:26px 26px}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%}
+#lv{touch-action:none;cursor:crosshair}
+.dock{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:6;display:none;align-items:center;gap:6px;padding:8px 12px;background:var(--sf);border:1px solid var(--ln);border-radius:999px;box-shadow:0 10px 36px rgba(29,35,39,.16);max-width:calc(100vw - 20px);overflow-x:auto}
+.dock.on{display:flex}
+.tl{padding:9px;border-radius:50%;color:var(--mut)}.tl:hover{background:var(--acs);color:var(--ink)}
+.tl.on{background:var(--ink);color:#fff}
+.vr{width:1px;height:24px;background:var(--ln);margin:0 4px;flex:none}
+.sw{display:flex;gap:6px}
+.sw button{width:22px;height:22px;border-radius:50%;padding:0;border:2px solid #fff;box-shadow:0 0 0 1px var(--ln);flex:none}
+.sw button.on{box-shadow:0 0 0 2px var(--ink)}
+#size{width:90px;accent-color:var(--ac)}
+#toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:8px 16px;border-radius:999px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9;font-size:.9rem}
 #toast.show{opacity:1}
-.empty{color:var(--mute);margin-top:30px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:640px){#join h1{font-size:2.6rem}.cnt{display:none}.view{padding:16px 12px}}
 </style>
 </head>
 <body>
-<div class="wrap">
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+<symbol id="i-pen" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+<symbol id="i-hl" viewBox="0 0 24 24"><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></symbol>
+<symbol id="i-er" viewBox="0 0 24 24"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></symbol>
+<symbol id="i-undo" viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+<symbol id="i-dl" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+<symbol id="i-note" viewBox="0 0 24 24"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3Z"/><path d="M15 3v6h6"/></symbol>
+<symbol id="i-exit" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
+</svg>
 
 <section id="join">
-  <h1>OnNotes</h1>
-  <p>Tulis catatan dan gambar bareng-bareng, langsung muncul di layar semua orang.</p>
-  <button id="make">Buat papan baru</button>
-  <div class="row">
-    <input id="codeIn" maxlength="6" placeholder="KODE PAPAN" aria-label="Kode papan">
-    <button id="go">Masuk</button>
-  </div>
+  <h1 class="serif">OnNotes</h1>
+  <p>Catatan dan papan gambar yang bisa dikerjakan bareng. Bagikan kodenya, langsung nulis.</p>
+  <button class="btn pri" id="make" data-ic="plus">Buat ruang baru</button>
+  <div class="or">atau masuk dengan kode</div>
+  <div class="rowc"><input type="text" id="codeIn" maxlength="6" placeholder="KODE" aria-label="Kode ruang"><button class="btn sec" id="go">Masuk</button></div>
   <div id="setup"></div>
 </section>
 
 <section id="app">
-  <header>
-    <div><span class="code" id="codeShow"></span></div>
-    <div class="row" style="margin:0">
-      <button id="copy">Salin link</button>
-      <button id="leave">Keluar</button>
+  <header class="top">
+    <div class="logo serif" data-ic="pen">OnNotes</div>
+    <div class="seg"><button id="tNotes" class="on" data-ic="note">Catatan</button><button id="tBoard" data-ic="pen">Papan</button></div>
+    <div class="right">
+      <div class="who" id="who" title="Klik untuk ganti nama"></div>
+      <button class="chip" id="codeBtn" title="Salin link ruang"></button>
+      <button class="ghost" id="leave" title="Keluar" data-ic="exit"></button>
     </div>
   </header>
-  <div class="tabs row" style="margin:0">
-    <button id="tNotes" class="on">Catatan</button>
-    <button id="tBoard">Gambar</button>
-  </div>
 
-  <div id="notesView">
-    <div class="row"><button id="addNote">Tambah catatan</button></div>
+  <main class="view on" id="notesView">
+    <div class="vh"><h2 class="serif">Catatan bersama</h2><button class="btn pri" id="addNote" data-ic="plus">Catatan baru</button></div>
     <div id="notes"></div>
-    <p class="empty" id="noNotes">Belum ada catatan. Klik “Tambah catatan” untuk mulai menulis.</p>
-  </div>
+    <div id="empty"><svg viewBox="0 0 24 24"><use href="#i-note"/></svg>Belum ada catatan. Klik “Catatan baru” untuk mulai.</div>
+  </main>
 
-  <div id="board">
-    <div class="tools">
-      <input type="color" id="color" value="#14213d" aria-label="Warna">
-      <input type="range" id="size" min="2" max="24" value="4" aria-label="Ukuran garis">
-      <button id="eraser">Penghapus</button>
-      <button id="clear">Bersihkan papan</button>
-    </div>
-    <canvas id="cv" width="1200" height="700"></canvas>
+  <main class="view" id="boardView">
+    <div id="boardTabs"></div>
+    <div class="stage"><canvas id="cv" width="1920" height="1200"></canvas><canvas id="lv" width="1920" height="1200"></canvas></div>
+  </main>
+
+  <div class="dock" id="dock">
+    <button class="tl on" data-tool="p" title="Pensil (P)" data-ic="pen"></button>
+    <button class="tl" data-tool="h" title="Stabilo (H)" data-ic="hl"></button>
+    <button class="tl" data-tool="e" title="Penghapus (E)" data-ic="er"></button>
+    <span class="vr"></span><div class="sw" id="sw"></div><span class="vr"></span>
+    <input type="range" id="size" min="2" max="30" value="5" aria-label="Ketebalan">
+    <span class="vr"></span>
+    <button class="tl" id="undo" title="Batalkan (Ctrl+Z)" data-ic="undo"></button>
+    <button class="tl" id="clearB" title="Bersihkan papan" data-ic="trash"></button>
+    <button class="tl" id="dl" title="Unduh gambar" data-ic="dl"></button>
   </div>
 </section>
-</div>
 <div id="toast"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
-/* ====== ISI KONFIGURASI FIREBASE KAMU DI SINI (lihat panduan) ====== */
 const firebaseConfig = {
   apiKey: "AIzaSyDV7762Be-Vyq2JqL3dCavTTE6DPdOOaBI",
   authDomain: "onnotes-ff5f1.firebaseapp.com",
@@ -98,107 +146,208 @@ const firebaseConfig = {
   projectId: "onnotes-ff5f1",
   appId: "1:418028720731:web:b4bba0fb22caf7148ea57e"
 };
-/* =================================================================== */
 
-const $ = id => document.getElementById(id);
-const configured = firebaseConfig.apiKey !== "ISI_DI_SINI";
-let db, room, refs = {}, eraser = false;
+const $=id=>document.getElementById(id);
+const ic=n=>`<svg viewBox="0 0 24 24"><use href="#i-${n}"/></svg>`;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+document.querySelectorAll('[data-ic]').forEach(e=>e.insertAdjacentHTML('afterbegin',ic(e.dataset.ic)));
+const W=1920,H=1200,cv=$('cv'),cx=cv.getContext('2d'),lv=$('lv'),lx=lv.getContext('2d');
+const clr=c=>c.clearRect(0,0,W,H);
+const cid=Math.random().toString(36).slice(2,9);
+let db,room,cb=null,boards={},refs={},sref=null,lref=null,strokes={},liveMap={},myKeys={},cur=null,tool='p',color='#1d2327',lastLive=0,focusNext=null,rq;
+const configured=!!firebaseConfig.apiKey&&!firebaseConfig.apiKey.includes('ISI_DI_SINI');
+if(configured){firebase.initializeApp(firebaseConfig);db=firebase.database()}
+else{$('setup').style.display='block';$('setup').textContent='Firebase belum diatur. Isi firebaseConfig di index.html.'}
 
-function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1800)}
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('show'),1800)}
 function newCode(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<5;i++)s+=c[Math.floor(Math.random()*c.length)];return s}
 
-if(!configured){
-  const s=$('setup');s.style.display='block';
-  s.innerHTML='Firebase belum diatur. Buka file <b>index.html</b>, lalu isi <b>firebaseConfig</b> sesuai panduan. Tanpa itu, papan belum bisa dipakai bareng.';
-}else{
-  firebase.initializeApp(firebaseConfig);
-  db = firebase.database();
-}
-
+/* ---------- Masuk / keluar ---------- */
 function enter(code){
-  if(!configured){toast('Isi dulu konfigurasi Firebase');return}
+  if(!configured)return;
   code=code.toUpperCase().replace(/[^A-Z0-9]/g,'');
   if(code.length<4){toast('Kode minimal 4 karakter');return}
   room=code;location.hash=code;
-  $('join').style.display='none';$('app').style.display='block';$('codeShow').textContent=code;
-  startNotes();startBoard();
+  $('join').style.display='none';$('app').style.display='block';
+  $('codeBtn').innerHTML=`${esc(code)} ${ic('copy')}`;
+  startPresence();startNotes();startBoards();
 }
 function leave(){
-  Object.values(refs).forEach(r=>r.off());refs={};
-  $('notes').innerHTML='';clearCanvas();strokes={};
+  Object.values(refs).forEach(r=>r.off&&r.off());
+  if(refs.me)refs.me.remove();
+  if(sref){sref.off();lref.off();lref.child(cid).remove()}
+  refs={};sref=lref=null;cb=null;boards={};strokes={};liveMap={};cur=null;
+  $('notes').innerHTML='';clr(cx);clr(lx);room=null;
   history.replaceState(null,'',location.pathname);
   $('app').style.display='none';$('join').style.display='block';
 }
 $('make').onclick=()=>enter(newCode());
 $('go').onclick=()=>enter($('codeIn').value);
-$('codeIn').addEventListener('keydown',e=>{if(e.key==='Enter')enter($('codeIn').value)});
+$('codeIn').onkeydown=e=>{if(e.key==='Enter')enter($('codeIn').value)};
 $('leave').onclick=leave;
-$('copy').onclick=async()=>{
-  const url=location.href;
-  try{await navigator.clipboard.writeText(url);toast('Link disalin')}catch(e){prompt('Salin link ini:',url)}
-};
-$('tNotes').onclick=()=>tab(true);$('tBoard').onclick=()=>tab(false);
+$('codeBtn').onclick=async()=>{try{await navigator.clipboard.writeText(location.href);toast('Link disalin')}catch(e){prompt('Salin link ini:',location.href)}};
 function tab(n){
-  $('notesView').style.display=n?'block':'none';$('board').style.display=n?'none':'block';
+  $('notesView').classList.toggle('on',n);$('boardView').classList.toggle('on',!n);$('dock').classList.toggle('on',!n);
   $('tNotes').classList.toggle('on',n);$('tBoard').classList.toggle('on',!n);
 }
+$('tNotes').onclick=()=>tab(true);$('tBoard').onclick=()=>tab(false);
+
+/* ---------- Siapa yang online ---------- */
+const AVC=['#4f7f6d','#c2566a','#b7832f','#4a76b8','#7c5cb0'];
+let myName='';try{myName=localStorage.getItem('onnotes-name')||''}catch(e){}
+if(!myName)myName='Tamu '+Math.floor(10+Math.random()*90);
+const myColor=AVC[Math.floor(Math.random()*AVC.length)];
+function startPresence(){
+  const r=db.ref(`rooms/${room}/presence/${cid}`);refs.me=r;
+  r.onDisconnect().remove();r.set({n:myName,c:myColor});
+  const p=db.ref(`rooms/${room}/presence`);refs.pres=p;
+  p.on('value',s=>{
+    const v=Object.values(s.val()||{});
+    $('who').innerHTML=v.slice(0,4).map(u=>`<span class="av" style="background:${esc(u.c)}" title="${esc(u.n)}">${esc((u.n||'?')[0])}</span>`).join('')
+      +(v.length>4?`<span class="av more">+${v.length-4}</span>`:'')+`<span class="cnt">${v.length} online</span>`;
+  });
+}
+$('who').onclick=()=>{
+  const n=(prompt('Nama kamu:',myName)||'').trim().slice(0,16);
+  if(!n)return;myName=n;try{localStorage.setItem('onnotes-name',n)}catch(e){}
+  refs.me&&refs.me.set({n:myName,c:myColor});
+};
 
 /* ---------- Catatan ---------- */
+const NC={sage:'#dcebe3',blush:'#f6dfdc',sand:'#f3e8cf',sky:'#dce8f3'};
 function startNotes(){
-  const ref=db.ref('rooms/'+room+'/notes');refs.notes=ref;
-  const upd=()=>$('noNotes').style.display=$('notes').children.length?'none':'block';
+  const ref=db.ref(`rooms/${room}/notes`);refs.notes=ref;
+  const upd=()=>$('empty').style.display=$('notes').children.length?'none':'flex';
   ref.on('child_added',s=>{
-    const id=s.key,d=document.createElement('div');d.className='note';d.id='n-'+id;
-    const ta=document.createElement('textarea');ta.value=(s.val()||{}).text||'';ta.placeholder='Tulis di sini…';
-    let t;ta.oninput=()=>{clearTimeout(t);t=setTimeout(()=>ref.child(id).set({text:ta.value}),250)};
-    const del=document.createElement('button');del.textContent='Hapus';del.onclick=()=>ref.child(id).remove();
-    d.append(ta,del);$('notes').prepend(d);upd();
+    const id=s.key,v=s.val()||{},d=document.createElement('article');
+    d.className='note';d.id='n-'+id;d.style.background=NC[v.color]||NC.sand;
+    d.innerHTML=`<div class="nh">${Object.keys(NC).map(k=>`<button class="dot" data-c="${k}" style="background:${NC[k]}" aria-label="Warna ${k}"></button>`).join('')}<span class="sp"></span><button class="ic" data-del title="Hapus catatan">${ic('trash')}</button></div><textarea placeholder="Tulis sesuatu…"></textarea>`;
+    const ta=d.querySelector('textarea');ta.value=v.text||'';
+    let t;ta.oninput=()=>{clearTimeout(t);t=setTimeout(()=>ref.child(id).update({text:ta.value}),250)};
+    d.onclick=e=>{
+      const c=e.target.closest('[data-c]');if(c)ref.child(id).update({color:c.dataset.c});
+      if(e.target.closest('[data-del]')&&confirm('Hapus catatan ini untuk semua orang?'))ref.child(id).remove();
+    };
+    $('notes').prepend(d);upd();
+    if(focusNext===id){ta.focus();focusNext=null}
   });
   ref.on('child_changed',s=>{
-    const ta=document.querySelector('#n-'+s.key+' textarea');
-    if(ta&&document.activeElement!==ta)ta.value=(s.val()||{}).text||'';
+    const d=$('n-'+s.key);if(!d)return;const v=s.val()||{},ta=d.querySelector('textarea');
+    d.style.background=NC[v.color]||NC.sand;
+    if(document.activeElement!==ta)ta.value=v.text||'';
   });
-  ref.on('child_removed',s=>{const e=$('n-'+s.key);if(e)e.remove();upd()});
+  ref.on('child_removed',s=>{const d=$('n-'+s.key);if(d)d.remove();upd()});
 }
-$('addNote').onclick=()=>{db.ref('rooms/'+room+'/notes').push({text:''})};
+$('addNote').onclick=()=>{
+  const ref=db.ref(`rooms/${room}/notes`),k=ref.push().key,cs=Object.keys(NC);
+  focusNext=k;ref.child(k).set({text:'',color:cs[Math.floor(Math.random()*cs.length)]});
+};
 
-/* ---------- Papan gambar ---------- */
-const cv=$('cv'),ctx=cv.getContext('2d');let strokes={};
-function drawStroke(s){
+/* ---------- Papan gambar (banyak papan) ---------- */
+const bIds=()=>Object.keys(boards).sort((a,b)=>(boards[a].t||0)-(boards[b].t||0));
+function startBoards(){
+  const r=db.ref(`rooms/${room}/boards`);refs.boards=r;
+  r.child('b1').transaction(v=>v||{name:'Papan 1',t:1});
+  r.on('value',s=>{
+    boards=s.val()||{};const ids=bIds();if(!ids.length)return;
+    if(!boards[cb]){cb=ids[0];loadBoard()}
+    renderTabs();
+  });
+}
+function renderTabs(){
+  const ids=bIds();
+  $('boardTabs').innerHTML=ids.map(id=>`<div class="bt${id===cb?' on':''}"><button class="nm" data-id="${id}" title="Klik dua kali untuk ganti nama">${esc(boards[id].name)}</button>${id===cb&&ids.length>1?`<button class="x" data-del="${id}" title="Hapus papan">${ic('x')}</button>`:''}</div>`).join('')
+    +`<button class="bt add" id="addB">${ic('plus')}Papan baru</button>`;
+}
+$('boardTabs').onclick=e=>{
+  const del=e.target.closest('[data-del]'),nm=e.target.closest('.nm'),add=e.target.closest('#addB');
+  if(del){
+    if(confirm('Hapus papan ini beserta gambarnya untuk semua orang?')){
+      const id=del.dataset.del;
+      db.ref(`rooms/${room}/strokes/${id}`).remove();db.ref(`rooms/${room}/live/${id}`).remove();refs.boards.child(id).remove();
+    }
+  }else if(add){
+    const k=refs.boards.push().key;cb=k;loadBoard();
+    refs.boards.child(k).set({name:'Papan '+(bIds().length+1),t:Date.now()});
+  }else if(nm&&nm.dataset.id!==cb){cb=nm.dataset.id;loadBoard();renderTabs()}
+};
+$('boardTabs').ondblclick=e=>{
+  const nm=e.target.closest('.nm');if(!nm)return;
+  const n=(prompt('Nama papan:',boards[nm.dataset.id].name)||'').trim().slice(0,24);
+  if(n)refs.boards.child(nm.dataset.id).update({name:n});
+};
+
+function path(c,s){
   const p=s.p;if(!p||p.length<2)return;
-  ctx.strokeStyle=s.c;ctx.lineWidth=s.w;ctx.lineCap='round';ctx.lineJoin='round';
-  ctx.beginPath();ctx.moveTo(p[0],p[1]);
-  if(p.length===2)ctx.lineTo(p[0]+.1,p[1]);
-  for(let i=2;i<p.length;i+=2)ctx.lineTo(p[i],p[i+1]);
-  ctx.stroke();
+  c.save();c.lineCap=c.lineJoin='round';c.lineWidth=s.w;
+  if(s.t==='e'){c.globalCompositeOperation='destination-out';c.strokeStyle='#000'}
+  else{c.strokeStyle=s.c;c.globalAlpha=s.t==='h'?.35:1}
+  c.beginPath();c.moveTo(p[0],p[1]);
+  if(p.length<4)c.lineTo(p[0]+.1,p[1]);
+  for(let i=2;i<p.length-2;i+=2)c.quadraticCurveTo(p[i],p[i+1],(p[i]+p[i+2])/2,(p[i+1]+p[i+3])/2);
+  if(p.length>=4)c.lineTo(p[p.length-2],p[p.length-1]);
+  c.stroke();c.restore();
 }
-function clearCanvas(){ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height)}
-function redraw(){clearCanvas();Object.values(strokes).forEach(drawStroke)}
-function startBoard(){
-  clearCanvas();
-  const ref=db.ref('rooms/'+room+'/strokes');refs.strokes=ref;
-  ref.on('child_added',s=>{strokes[s.key]=s.val();drawStroke(s.val())});
-  ref.on('child_removed',s=>{delete strokes[s.key];redraw()});
+function redraw(){cancelAnimationFrame(rq);rq=requestAnimationFrame(()=>{clr(cx);Object.keys(strokes).sort().forEach(k=>path(cx,strokes[k]))})}
+function renderLive(){clr(lx);Object.values(liveMap).forEach(s=>s&&path(lx,s));if(cur&&cur.t!=='e')path(lx,cur)}
+function loadBoard(){
+  if(sref){sref.off();lref.off();lref.child(cid).remove()}
+  strokes={};liveMap={};cur=null;clr(cx);clr(lx);
+  sref=db.ref(`rooms/${room}/strokes/${cb}`);lref=db.ref(`rooms/${room}/live/${cb}`);
+  sref.on('child_added',s=>{if(strokes[s.key])return;strokes[s.key]=s.val();path(cx,s.val())});
+  sref.on('child_removed',s=>{delete strokes[s.key];redraw()});
+  lref.on('value',s=>{liveMap=s.val()||{};delete liveMap[cid];renderLive()});
 }
-let cur=null;
-function pos(e){const r=cv.getBoundingClientRect();return[Math.round((e.clientX-r.left)*cv.width/r.width),Math.round((e.clientY-r.top)*cv.height/r.height)]}
-cv.addEventListener('pointerdown',e=>{
-  cv.setPointerCapture(e.pointerId);
-  cur={c:eraser?'#ffffff':$('color').value,w:eraser?$('size').value*3:+$('size').value,p:pos(e)};
-});
-cv.addEventListener('pointermove',e=>{
-  if(!cur)return;const q=pos(e),p=cur.p,n=p.length;
-  ctx.strokeStyle=cur.c;ctx.lineWidth=cur.w;ctx.lineCap='round';
-  ctx.beginPath();ctx.moveTo(p[n-2],p[n-1]);ctx.lineTo(q[0],q[1]);ctx.stroke();
-  p.push(q[0],q[1]);
-});
-const finish=()=>{if(cur&&cur.p.length>=2){cur.w=+cur.w;db.ref('rooms/'+room+'/strokes').push(cur)}cur=null};
-cv.addEventListener('pointerup',finish);cv.addEventListener('pointercancel',finish);
-$('eraser').onclick=()=>{eraser=!eraser;$('eraser').style.background=eraser?'var(--accent)':'';$('eraser').style.color=eraser?'#14213d':''};
-$('color').oninput=()=>{eraser=false;$('eraser').style.background='';$('eraser').style.color=''};
-$('clear').onclick=()=>{if(confirm('Hapus semua gambar untuk semua orang?'))db.ref('rooms/'+room+'/strokes').remove()};
 
-/* Masuk otomatis kalau link punya kode */
+const pos=e=>{const r=lv.getBoundingClientRect();return[Math.round((e.clientX-r.left)*W/r.width),Math.round((e.clientY-r.top)*H/r.height)]};
+lv.onpointerdown=e=>{
+  if(!cb||!sref)return;lv.setPointerCapture(e.pointerId);
+  const sz=+$('size').value;
+  cur={t:tool,c:color,w:tool==='p'?sz:sz*3,p:pos(e)};
+  if(tool==='e')path(cx,cur);else{lref.child(cid).onDisconnect().remove();renderLive()}
+};
+lv.onpointermove=e=>{
+  if(!cur)return;const q=pos(e),p=cur.p;
+  if(Math.hypot(q[0]-p[p.length-2],q[1]-p[p.length-1])<2)return;
+  p.push(q[0],q[1]);
+  if(cur.t==='e')path(cx,{t:'e',w:cur.w,p:p.slice(-4)});
+  else{renderLive();const n=Date.now();if(n-lastLive>70){lastLive=n;lref.child(cid).set(cur)}}
+};
+const end=()=>{
+  if(!cur)return;const s=cur;cur=null;
+  if(s.t!=='e')lref.child(cid).remove();
+  const k=sref.push().key;strokes[k]=s;(myKeys[cb]=myKeys[cb]||[]).push(k);
+  sref.child(k).set(s);if(s.t!=='e')path(cx,s);renderLive();
+};
+lv.onpointerup=end;lv.onpointercancel=end;
+
+/* ---------- Toolbar ---------- */
+const SW=['#1d2327','#e5484d','#f08c3c','#f5c518','#3e9b6e','#3b6fd8','#8a5cd0'];
+$('sw').innerHTML=SW.map((c,i)=>`<button style="background:${c}" data-col="${c}" class="${i?'':'on'}" aria-label="Warna ${c}"></button>`).join('');
+function setTool(t){tool=t;document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('on',b.dataset.tool===t))}
+$('dock').onclick=e=>{
+  const t=e.target.closest('[data-tool]'),c=e.target.closest('[data-col]');
+  if(t)setTool(t.dataset.tool);
+  if(c){color=c.dataset.col;document.querySelectorAll('[data-col]').forEach(b=>b.classList.toggle('on',b===c));if(tool==='e')setTool('p')}
+};
+$('undo').onclick=()=>{
+  const a=myKeys[cb]||[];
+  while(a.length){const k=a.pop();if(strokes[k]){sref.child(k).remove();delete strokes[k];redraw();return}}
+  toast('Tidak ada goresanmu yang bisa dibatalkan');
+};
+$('clearB').onclick=()=>{if(sref&&confirm('Hapus semua gambar di papan ini untuk semua orang?')){sref.remove();strokes={};redraw()}};
+$('dl').onclick=()=>{
+  const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  x.fillStyle='#fff';x.fillRect(0,0,W,H);x.drawImage(cv,0,0);
+  c.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`onnotes-${room}.png`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)});
+};
+addEventListener('keydown',e=>{
+  if(!room||!$('boardView').classList.contains('on')||/INPUT|TEXTAREA/.test(document.activeElement.tagName))return;
+  const k=e.key.toLowerCase();
+  if((e.ctrlKey||e.metaKey)&&k==='z'){e.preventDefault();$('undo').click()}
+  else if(k==='p')setTool('p');else if(k==='h')setTool('h');else if(k==='e')setTool('e');
+});
+
 if(location.hash.length>1&&configured)enter(location.hash.slice(1));
 </script>
 </body>
