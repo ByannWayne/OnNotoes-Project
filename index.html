@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OnNotes</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#e9eef2;--ink:#14213d;--paper:#fff;--line:#c9d3dc;--accent:#ffc83d;--soft:#fff3c4;--mute:#5d6b7a}
+@media (prefers-color-scheme:dark){:root{--bg:#10161d;--ink:#e8eef5;--paper:#1a232d;--line:#2d3a47;--accent:#ffc83d;--soft:#4a3f12;--mute:#93a1b0}}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;background:var(--bg);color:var(--ink);
+background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:28px 28px;min-height:100vh}
+button{font:inherit;cursor:pointer;border:2px solid var(--ink);background:var(--paper);color:var(--ink);border-radius:8px;padding:8px 14px;font-weight:600}
+button:hover{background:var(--accent);color:#14213d}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+input{font:inherit;border:2px solid var(--ink);background:var(--paper);color:var(--ink);border-radius:8px;padding:8px 12px}
+.wrap{max-width:1100px;margin:0 auto;padding:20px 16px 60px}
+#join{max-width:520px;margin:12vh auto 0;background:var(--paper);border:2px solid var(--ink);border-radius:14px;padding:28px;box-shadow:8px 8px 0 var(--ink)}
+#join h1{font-size:2.4rem;margin:0 0 6px;font-weight:800;letter-spacing:-.02em}
+#join p{color:var(--mute);margin:0 0 20px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.row input{flex:1;min-width:140px;text-transform:uppercase;letter-spacing:.15em}
+#setup{display:none;background:var(--soft);border:2px solid var(--ink);border-radius:10px;padding:14px;margin-top:18px;font-size:.92rem}
+#app{display:none}
+header{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between;margin-bottom:14px}
+.code{font-weight:800;font-size:1.3rem;letter-spacing:.2em;background:var(--accent);color:#14213d;border:2px solid var(--ink);border-radius:8px;padding:4px 12px}
+.tabs button.on{background:var(--ink);color:var(--paper)}
+#notes{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-top:14px}
+.note{background:var(--soft);border:2px solid var(--ink);border-radius:4px 4px 14px 4px;padding:8px;box-shadow:4px 4px 0 var(--ink);display:flex;flex-direction:column}
+.note textarea{width:100%;min-height:150px;resize:vertical;border:0;background:transparent;color:var(--ink);font:inherit;padding:4px}
+.note textarea:focus{outline:none}
+.note button{align-self:flex-end;padding:2px 10px;font-size:.8rem}
+#board{display:none}
+.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.tools input[type=color]{padding:0;width:42px;height:38px}
+.tools input[type=range]{padding:0;width:110px}
+canvas{width:100%;background:#fff;border:2px solid var(--ink);border-radius:10px;touch-action:none;cursor:crosshair;display:block}
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:8px 16px;border-radius:8px;opacity:0;transition:opacity .2s;pointer-events:none}
+#toast.show{opacity:1}
+.empty{color:var(--mute);margin-top:30px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<section id="join">
+  <h1>OnNotes</h1>
+  <p>Tulis catatan dan gambar bareng-bareng, langsung muncul di layar semua orang.</p>
+  <button id="make">Buat papan baru</button>
+  <div class="row">
+    <input id="codeIn" maxlength="6" placeholder="KODE PAPAN" aria-label="Kode papan">
+    <button id="go">Masuk</button>
+  </div>
+  <div id="setup"></div>
+</section>
+
+<section id="app">
+  <header>
+    <div><span class="code" id="codeShow"></span></div>
+    <div class="row" style="margin:0">
+      <button id="copy">Salin link</button>
+      <button id="leave">Keluar</button>
+    </div>
+  </header>
+  <div class="tabs row" style="margin:0">
+    <button id="tNotes" class="on">Catatan</button>
+    <button id="tBoard">Gambar</button>
+  </div>
+
+  <div id="notesView">
+    <div class="row"><button id="addNote">Tambah catatan</button></div>
+    <div id="notes"></div>
+    <p class="empty" id="noNotes">Belum ada catatan. Klik “Tambah catatan” untuk mulai menulis.</p>
+  </div>
+
+  <div id="board">
+    <div class="tools">
+      <input type="color" id="color" value="#14213d" aria-label="Warna">
+      <input type="range" id="size" min="2" max="24" value="4" aria-label="Ukuran garis">
+      <button id="eraser">Penghapus</button>
+      <button id="clear">Bersihkan papan</button>
+    </div>
+    <canvas id="cv" width="1200" height="700"></canvas>
+  </div>
+</section>
+</div>
+<div id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+/* ====== ISI KONFIGURASI FIREBASE KAMU DI SINI (lihat panduan) ====== */
+const firebaseConfig = {
+  apiKey: "AIzaSyDV7762Be-Vyq2JqL3dCavTTE6DPdOOaBI",
+  authDomain: "onnotes-ff5f1.firebaseapp.com",
+  databaseURL: "https://onnotes-ff5f1-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "onnotes-ff5f1",
+  appId: "1:418028720731:web:b4bba0fb22caf7148ea57e"
+};
+/* =================================================================== */
+
+const $ = id => document.getElementById(id);
+const configured = firebaseConfig.apiKey !== "ISI_DI_SINI";
+let db, room, refs = {}, eraser = false;
+
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1800)}
+function newCode(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<5;i++)s+=c[Math.floor(Math.random()*c.length)];return s}
+
+if(!configured){
+  const s=$('setup');s.style.display='block';
+  s.innerHTML='Firebase belum diatur. Buka file <b>index.html</b>, lalu isi <b>firebaseConfig</b> sesuai panduan. Tanpa itu, papan belum bisa dipakai bareng.';
+}else{
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+}
+
+function enter(code){
+  if(!configured){toast('Isi dulu konfigurasi Firebase');return}
+  code=code.toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(code.length<4){toast('Kode minimal 4 karakter');return}
+  room=code;location.hash=code;
+  $('join').style.display='none';$('app').style.display='block';$('codeShow').textContent=code;
+  startNotes();startBoard();
+}
+function leave(){
+  Object.values(refs).forEach(r=>r.off());refs={};
+  $('notes').innerHTML='';clearCanvas();strokes={};
+  history.replaceState(null,'',location.pathname);
+  $('app').style.display='none';$('join').style.display='block';
+}
+$('make').onclick=()=>enter(newCode());
+$('go').onclick=()=>enter($('codeIn').value);
+$('codeIn').addEventListener('keydown',e=>{if(e.key==='Enter')enter($('codeIn').value)});
+$('leave').onclick=leave;
+$('copy').onclick=async()=>{
+  const url=location.href;
+  try{await navigator.clipboard.writeText(url);toast('Link disalin')}catch(e){prompt('Salin link ini:',url)}
+};
+$('tNotes').onclick=()=>tab(true);$('tBoard').onclick=()=>tab(false);
+function tab(n){
+  $('notesView').style.display=n?'block':'none';$('board').style.display=n?'none':'block';
+  $('tNotes').classList.toggle('on',n);$('tBoard').classList.toggle('on',!n);
+}
+
+/* ---------- Catatan ---------- */
+function startNotes(){
+  const ref=db.ref('rooms/'+room+'/notes');refs.notes=ref;
+  const upd=()=>$('noNotes').style.display=$('notes').children.length?'none':'block';
+  ref.on('child_added',s=>{
+    const id=s.key,d=document.createElement('div');d.className='note';d.id='n-'+id;
+    const ta=document.createElement('textarea');ta.value=(s.val()||{}).text||'';ta.placeholder='Tulis di sini…';
+    let t;ta.oninput=()=>{clearTimeout(t);t=setTimeout(()=>ref.child(id).set({text:ta.value}),250)};
+    const del=document.createElement('button');del.textContent='Hapus';del.onclick=()=>ref.child(id).remove();
+    d.append(ta,del);$('notes').prepend(d);upd();
+  });
+  ref.on('child_changed',s=>{
+    const ta=document.querySelector('#n-'+s.key+' textarea');
+    if(ta&&document.activeElement!==ta)ta.value=(s.val()||{}).text||'';
+  });
+  ref.on('child_removed',s=>{const e=$('n-'+s.key);if(e)e.remove();upd()});
+}
+$('addNote').onclick=()=>{db.ref('rooms/'+room+'/notes').push({text:''})};
+
+/* ---------- Papan gambar ---------- */
+const cv=$('cv'),ctx=cv.getContext('2d');let strokes={};
+function drawStroke(s){
+  const p=s.p;if(!p||p.length<2)return;
+  ctx.strokeStyle=s.c;ctx.lineWidth=s.w;ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.beginPath();ctx.moveTo(p[0],p[1]);
+  if(p.length===2)ctx.lineTo(p[0]+.1,p[1]);
+  for(let i=2;i<p.length;i+=2)ctx.lineTo(p[i],p[i+1]);
+  ctx.stroke();
+}
+function clearCanvas(){ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height)}
+function redraw(){clearCanvas();Object.values(strokes).forEach(drawStroke)}
+function startBoard(){
+  clearCanvas();
+  const ref=db.ref('rooms/'+room+'/strokes');refs.strokes=ref;
+  ref.on('child_added',s=>{strokes[s.key]=s.val();drawStroke(s.val())});
+  ref.on('child_removed',s=>{delete strokes[s.key];redraw()});
+}
+let cur=null;
+function pos(e){const r=cv.getBoundingClientRect();return[Math.round((e.clientX-r.left)*cv.width/r.width),Math.round((e.clientY-r.top)*cv.height/r.height)]}
+cv.addEventListener('pointerdown',e=>{
+  cv.setPointerCapture(e.pointerId);
+  cur={c:eraser?'#ffffff':$('color').value,w:eraser?$('size').value*3:+$('size').value,p:pos(e)};
+});
+cv.addEventListener('pointermove',e=>{
+  if(!cur)return;const q=pos(e),p=cur.p,n=p.length;
+  ctx.strokeStyle=cur.c;ctx.lineWidth=cur.w;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(p[n-2],p[n-1]);ctx.lineTo(q[0],q[1]);ctx.stroke();
+  p.push(q[0],q[1]);
+});
+const finish=()=>{if(cur&&cur.p.length>=2){cur.w=+cur.w;db.ref('rooms/'+room+'/strokes').push(cur)}cur=null};
+cv.addEventListener('pointerup',finish);cv.addEventListener('pointercancel',finish);
+$('eraser').onclick=()=>{eraser=!eraser;$('eraser').style.background=eraser?'var(--accent)':'';$('eraser').style.color=eraser?'#14213d':''};
+$('color').oninput=()=>{eraser=false;$('eraser').style.background='';$('eraser').style.color=''};
+$('clear').onclick=()=>{if(confirm('Hapus semua gambar untuk semua orang?'))db.ref('rooms/'+room+'/strokes').remove()};
+
+/* Masuk otomatis kalau link punya kode */
+if(location.hash.length>1&&configured)enter(location.hash.slice(1));
+</script>
+</body>
+</html>
