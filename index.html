@@ -70,6 +70,18 @@ input[type=text]{font:inherit;border:1px solid var(--ln);background:var(--sf);co
 .sw button{width:22px;height:22px;border-radius:50%;padding:0;border:2px solid #fff;box-shadow:0 0 0 1px var(--ln);flex:none}
 .sw button.on{box-shadow:0 0 0 2px var(--ink)}
 #size{width:90px;accent-color:var(--ac)}
+#cv{pointer-events:none}
+#items{position:absolute;inset:0}
+.it{position:absolute;touch-action:none}
+.it img{width:100%;display:block;border-radius:6px;user-select:none;-webkit-user-drag:none}
+.it .ix,.it .rz{display:none}
+.stage.mv #lv{pointer-events:none}
+.stage.mv .it{cursor:grab;outline:1.5px dashed var(--ac);outline-offset:2px}
+.stage.mv .it .ix,.stage.mv .it .rz{display:block}
+.ix{position:absolute;top:-12px;right:-12px;background:var(--ink);color:#fff;border-radius:50%;padding:4px;line-height:0}
+.rz{position:absolute;right:-8px;bottom:-8px;width:16px;height:16px;border-radius:50%;background:var(--ac);border:2px solid #fff;cursor:nwse-resize}
+.ni{position:relative}.ni img{width:100%;border-radius:10px;display:block;margin:8px 0 4px}
+.ix2{position:absolute;top:14px;right:8px;background:rgba(0,0,0,.6);color:#fff;border-radius:50%;padding:4px;line-height:0}
 #toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:8px 16px;border-radius:999px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9;font-size:.9rem}
 #toast.show{opacity:1}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -89,6 +101,8 @@ input[type=text]{font:inherit;border:1px solid var(--ln);background:var(--sf);co
 <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
 <symbol id="i-note" viewBox="0 0 24 24"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3Z"/><path d="M15 3v6h6"/></symbol>
 <symbol id="i-exit" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
+<symbol id="i-img" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></symbol>
+<symbol id="i-move" viewBox="0 0 24 24"><path d="m5 9-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></symbol>
 </svg>
 
 <section id="join">
@@ -119,22 +133,25 @@ input[type=text]{font:inherit;border:1px solid var(--ln);background:var(--sf);co
 
   <main class="view" id="boardView">
     <div id="boardTabs"></div>
-    <div class="stage"><canvas id="cv" width="1920" height="1200"></canvas><canvas id="lv" width="1920" height="1200"></canvas></div>
+    <div class="stage" id="stage"><div id="items"></div><canvas id="cv" width="1920" height="1200"></canvas><canvas id="lv" width="1920" height="1200"></canvas></div>
   </main>
 
   <div class="dock" id="dock">
     <button class="tl on" data-tool="p" title="Pensil (P)" data-ic="pen"></button>
     <button class="tl" data-tool="h" title="Stabilo (H)" data-ic="hl"></button>
     <button class="tl" data-tool="e" title="Penghapus (E)" data-ic="er"></button>
+    <button class="tl" data-tool="m" title="Geser gambar (M)" data-ic="move"></button>
     <span class="vr"></span><div class="sw" id="sw"></div><span class="vr"></span>
     <input type="range" id="size" min="2" max="30" value="5" aria-label="Ketebalan">
     <span class="vr"></span>
+    <button class="tl" id="addImg" title="Tambah gambar" data-ic="img"></button>
     <button class="tl" id="undo" title="Batalkan (Ctrl+Z)" data-ic="undo"></button>
     <button class="tl" id="clearB" title="Bersihkan papan" data-ic="trash"></button>
     <button class="tl" id="dl" title="Unduh gambar" data-ic="dl"></button>
   </div>
 </section>
 <div id="toast"></div>
+<input type="file" id="fi" accept="image/*" hidden>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -176,6 +193,7 @@ function leave(){
   Object.values(refs).forEach(r=>r.off&&r.off());
   if(refs.me)refs.me.remove();
   if(sref){sref.off();lref.off();lref.child(cid).remove()}
+  if(irf)irf.off();irf=null;items={};$('items').innerHTML='';
   refs={};sref=lref=null;cb=null;boards={};strokes={};liveMap={};cur=null;
   $('notes').innerHTML='';clr(cx);clr(lx);room=null;
   history.replaceState(null,'',location.pathname);
@@ -221,19 +239,24 @@ function startNotes(){
   ref.on('child_added',s=>{
     const id=s.key,v=s.val()||{},d=document.createElement('article');
     d.className='note';d.id='n-'+id;d.style.background=NC[v.color]||NC.sand;
-    d.innerHTML=`<div class="nh">${Object.keys(NC).map(k=>`<button class="dot" data-c="${k}" style="background:${NC[k]}" aria-label="Warna ${k}"></button>`).join('')}<span class="sp"></span><button class="ic" data-del title="Hapus catatan">${ic('trash')}</button></div><textarea placeholder="Tulis sesuatu…"></textarea>`;
+    d.innerHTML=`<div class="nh">${Object.keys(NC).map(k=>`<button class="dot" data-c="${k}" style="background:${NC[k]}" aria-label="Warna ${k}"></button>`).join('')}<span class="sp"></span><button class="ic" data-img title="Tambah gambar">${ic('img')}</button><button class="ic" data-del title="Hapus catatan">${ic('trash')}</button></div><div class="ni"></div><textarea placeholder="Tulis sesuatu…"></textarea>`;
     const ta=d.querySelector('textarea');ta.value=v.text||'';
     let t;ta.oninput=()=>{clearTimeout(t);t=setTimeout(()=>ref.child(id).update({text:ta.value}),250)};
+    const attach=async f=>{const r=await saveImg(f);if(r)ref.child(id).update({img:r.id})};
+    const dropImg=()=>{const o=d.dataset.img;if(o)db.ref(`rooms/${room}/imgs/${o}`).remove()};
     d.onclick=e=>{
       const c=e.target.closest('[data-c]');if(c)ref.child(id).update({color:c.dataset.c});
-      if(e.target.closest('[data-del]')&&confirm('Hapus catatan ini untuk semua orang?'))ref.child(id).remove();
+      if(e.target.closest('[data-img]'))pickImage(attach);
+      if(e.target.closest('[data-rm]')){dropImg();ref.child(id).update({img:null})}
+      if(e.target.closest('[data-del]')&&confirm('Hapus catatan ini untuk semua orang?')){dropImg();ref.child(id).remove()}
     };
-    $('notes').prepend(d);upd();
+    ta.onpaste=e=>{const f=imgOf(e);if(f){e.preventDefault();attach(f)}};
+    $('notes').prepend(d);upd();setNoteImg(d,v.img);
     if(focusNext===id){ta.focus();focusNext=null}
   });
   ref.on('child_changed',s=>{
     const d=$('n-'+s.key);if(!d)return;const v=s.val()||{},ta=d.querySelector('textarea');
-    d.style.background=NC[v.color]||NC.sand;
+    d.style.background=NC[v.color]||NC.sand;setNoteImg(d,v.img);
     if(document.activeElement!==ta)ta.value=v.text||'';
   });
   ref.on('child_removed',s=>{const d=$('n-'+s.key);if(d)d.remove();upd()});
@@ -264,7 +287,7 @@ $('boardTabs').onclick=e=>{
   if(del){
     if(confirm('Hapus papan ini beserta gambarnya untuk semua orang?')){
       const id=del.dataset.del;
-      db.ref(`rooms/${room}/strokes/${id}`).remove();db.ref(`rooms/${room}/live/${id}`).remove();refs.boards.child(id).remove();
+      db.ref(`rooms/${room}/strokes/${id}`).remove();db.ref(`rooms/${room}/live/${id}`).remove();db.ref(`rooms/${room}/items/${id}`).remove();refs.boards.child(id).remove();
     }
   }else if(add){
     const k=refs.boards.push().key;cb=k;loadBoard();
@@ -292,11 +315,16 @@ function redraw(){cancelAnimationFrame(rq);rq=requestAnimationFrame(()=>{clr(cx)
 function renderLive(){clr(lx);Object.values(liveMap).forEach(s=>s&&path(lx,s));if(cur&&cur.t!=='e')path(lx,cur)}
 function loadBoard(){
   if(sref){sref.off();lref.off();lref.child(cid).remove()}
+  if(irf)irf.off();items={};$('items').innerHTML='';
   strokes={};liveMap={};cur=null;clr(cx);clr(lx);
   sref=db.ref(`rooms/${room}/strokes/${cb}`);lref=db.ref(`rooms/${room}/live/${cb}`);
   sref.on('child_added',s=>{if(strokes[s.key])return;strokes[s.key]=s.val();path(cx,s.val())});
   sref.on('child_removed',s=>{delete strokes[s.key];redraw()});
   lref.on('value',s=>{liveMap=s.val()||{};delete liveMap[cid];renderLive()});
+  irf=db.ref(`rooms/${room}/items/${cb}`);
+  irf.on('child_added',s=>mkItem(s.key,s.val()));
+  irf.on('child_changed',s=>{const d=$('it-'+s.key);if(!d||(drag&&drag.id===s.key))return;items[s.key]=s.val();placeItem(d,s.val())});
+  irf.on('child_removed',s=>{const d=$('it-'+s.key);if(d)d.remove();delete items[s.key]});
 }
 
 const pos=e=>{const r=lv.getBoundingClientRect();return[Math.round((e.clientX-r.left)*W/r.width),Math.round((e.clientY-r.top)*H/r.height)]};
@@ -324,7 +352,7 @@ lv.onpointerup=end;lv.onpointercancel=end;
 /* ---------- Toolbar ---------- */
 const SW=['#1d2327','#e5484d','#f08c3c','#f5c518','#3e9b6e','#3b6fd8','#8a5cd0'];
 $('sw').innerHTML=SW.map((c,i)=>`<button style="background:${c}" data-col="${c}" class="${i?'':'on'}" aria-label="Warna ${c}"></button>`).join('');
-function setTool(t){tool=t;document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('on',b.dataset.tool===t))}
+function setTool(t){tool=t;$('stage').classList.toggle('mv',t==='m');document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('on',b.dataset.tool===t))}
 $('dock').onclick=e=>{
   const t=e.target.closest('[data-tool]'),c=e.target.closest('[data-col]');
   if(t)setTool(t.dataset.tool);
@@ -338,15 +366,85 @@ $('undo').onclick=()=>{
 $('clearB').onclick=()=>{if(sref&&confirm('Hapus semua gambar di papan ini untuk semua orang?')){sref.remove();strokes={};redraw()}};
 $('dl').onclick=()=>{
   const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
-  x.fillStyle='#fff';x.fillRect(0,0,W,H);x.drawImage(cv,0,0);
+  x.fillStyle='#fff';x.fillRect(0,0,W,H);
+  Object.keys(items).forEach(k=>{const v=items[k],im=$('it-'+k)&&$('it-'+k).querySelector('img');if(im&&im.naturalWidth)x.drawImage(im,v.x,v.y,v.w,v.w/v.r)});
+  x.drawImage(cv,0,0);
   c.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`onnotes-${room}.png`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)});
 };
 addEventListener('keydown',e=>{
   if(!room||!$('boardView').classList.contains('on')||/INPUT|TEXTAREA/.test(document.activeElement.tagName))return;
   const k=e.key.toLowerCase();
   if((e.ctrlKey||e.metaKey)&&k==='z'){e.preventDefault();$('undo').click()}
-  else if(k==='p')setTool('p');else if(k==='h')setTool('h');else if(k==='e')setTool('e');
+  else if(k==='p')setTool('p');else if(k==='h')setTool('h');else if(k==='e')setTool('e');else if(k==='m')setTool('m');
 });
+
+/* ---------- Gambar (catatan & papan) ---------- */
+let irf=null,items={},drag=null,lastItem=0;const imgCache={};
+function shrink(file,max=1000){return new Promise((ok,no)=>{
+  const u=URL.createObjectURL(file),im=new Image();
+  im.onload=()=>{
+    const r=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');
+    c.width=Math.round(im.width*r);c.height=Math.round(im.height*r);
+    const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);
+    URL.revokeObjectURL(u);let q=.75,d=c.toDataURL('image/jpeg',q);
+    while(d.length>400000&&q>.35){q-=.1;d=c.toDataURL('image/jpeg',q)}
+    ok({d,r:c.width/c.height});
+  };
+  im.onerror=no;im.src=u;
+})}
+async function saveImg(f){
+  if(!f.type.startsWith('image/')){toast('File harus berupa gambar');return null}
+  try{
+    toast('Mengunggah gambar…');
+    const {d,r}=await shrink(f),id=db.ref(`rooms/${room}/imgs`).push().key;
+    await db.ref(`rooms/${room}/imgs/${id}`).set(d);imgCache[id]=d;toast('Gambar terunggah');return{id,r};
+  }catch(e){toast('Gagal mengunggah gambar');return null}
+}
+async function getImg(id){if(!id)return null;if(imgCache[id])return imgCache[id];const s=await db.ref(`rooms/${room}/imgs/${id}`).once('value');return imgCache[id]=s.val()}
+function pickImage(fn){$('fi').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)fn(f)};$('fi').click()}
+const imgOf=e=>[...(e.clipboardData||e.dataTransfer).files].find(f=>f.type.startsWith('image/'));
+const okImg=s=>typeof s==='string'&&s.startsWith('data:image/');
+
+function setNoteImg(d,id){
+  if((d.dataset.img||'')===(id||''))return;
+  d.dataset.img=id||'';const box=d.querySelector('.ni');box.innerHTML='';if(!id)return;
+  getImg(id).then(s=>{
+    if(d.dataset.img!==id||!okImg(s))return;
+    const im=new Image();im.alt='';im.src=s;box.append(im);
+    const b=document.createElement('button');b.className='ix2';b.dataset.rm='';b.title='Hapus gambar';b.innerHTML=ic('x');box.append(b);
+  });
+}
+
+function placeItem(d,v){d.style.left=v.x/W*100+'%';d.style.top=v.y/H*100+'%';d.style.width=v.w/W*100+'%'}
+function mkItem(id,v){
+  const d=document.createElement('div');d.className='it';d.id='it-'+id;items[id]=v;placeItem(d,v);
+  d.innerHTML=`<img alt="" draggable="false"><button class="ix" data-rm title="Hapus gambar">${ic('x')}</button><span class="rz"></span>`;
+  getImg(v.img).then(s=>{if(okImg(s))d.querySelector('img').src=s});
+  d.onpointerdown=e=>{
+    if(tool!=='m')return;
+    if(e.target.closest('[data-rm]')){irf.child(id).remove();db.ref(`rooms/${room}/imgs/${items[id].img}`).remove();return}
+    e.preventDefault();d.setPointerCapture(e.pointerId);
+    drag={id,rz:e.target.classList.contains('rz'),s:pos(e),o:{...items[id]}};
+  };
+  d.onpointermove=e=>{
+    if(!drag||drag.id!==id)return;
+    const q=pos(e),dx=q[0]-drag.s[0],dy=q[1]-drag.s[1],v=items[id];
+    if(drag.rz)v.w=Math.max(80,Math.round(drag.o.w+dx));else{v.x=Math.round(drag.o.x+dx);v.y=Math.round(drag.o.y+dy)}
+    placeItem(d,v);const n=Date.now();if(n-lastItem>80){lastItem=n;irf.child(id).update({x:v.x,y:v.y,w:v.w})}
+  };
+  d.onpointerup=()=>{if(drag&&drag.id===id){const v=items[id];irf.child(id).update({x:v.x,y:v.y,w:v.w});drag=null}};
+  $('items').append(d);
+}
+async function addBoardImg(f){
+  if(!irf)return;const r=await saveImg(f);if(!r)return;
+  const w=Math.round(Math.min(700,600*r.r)),h=w/r.r;
+  irf.push({img:r.id,x:Math.round((W-w)/2),y:Math.round(Math.max(40,(H-h)/2)),w,r:r.r});
+  setTool('m');toast('Geser dan ubah ukuran gambar, lalu pilih pensil untuk mencoret');
+}
+$('addImg').onclick=()=>pickImage(addBoardImg);
+addEventListener('paste',e=>{if(!room||!$('boardView').classList.contains('on'))return;const f=imgOf(e);if(f){e.preventDefault();addBoardImg(f)}});
+$('stage').ondragover=e=>e.preventDefault();
+$('stage').ondrop=e=>{e.preventDefault();const f=imgOf(e);if(f)addBoardImg(f)};
 
 if(location.hash.length>1&&configured)enter(location.hash.slice(1));
 </script>
